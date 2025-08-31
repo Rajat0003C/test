@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Cart</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f5f5f5;
+    }
+    header {
+      background: linear-gradient(135deg, #309a18, #1c6818);
+      color: #fff;
+      padding: 12px;
+      text-align: center;
+    }
+    header h2 { margin: 0; }
+
+    .cart-container {
+      max-width: 700px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+    th { background: #f1f1f1; }
+    td button {
+      padding: 4px 8px;
+      margin: 0 3px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-add { background: #27ae60; color: white; }
+    .btn-sub { background: #c0392b; color: white; }
+    .btn-remove { background: #e67e22; color: white; }
+
+    .checkout-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: #309a18;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    .checkout-btn:hover { background: #1c6818; }
+    .empty-msg {
+      text-align: center;
+      font-size: 18px;
+      color: #555;
+      margin: 30px 0;
+    }
+
+    /* Conditions styling */
+    .conditions {
+      font-size: 12px;
+      color: #666;
+      text-align: right;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h2>🛒 My Cart</h2>
+</header>
+
+<div class="cart-container" id="cart-container">
+  <p class="empty-msg">Loading your cart...</p>
+</div>
+
+<script>
+  function loadCart() {
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    let container = document.getElementById("cart-container");
+
+    if (cart.length === 0) {
+      container.innerHTML = `<p class="empty-msg">Your cart is empty!</p>`;
+      return;
+    }
+
+    let table = `
+      <table>
+        <tr>
+          <th>Product</th>
+          <th>Price</th>
+          <th>Qty</th>
+          <th>Total</th>
+          <th>Action</th>
+        </tr>
+    `;
+
+    let grandTotal = 0;
+    let totalItems = 0;
+
+    cart.forEach((item, index) => {
+      let total = item.price * item.quantity;
+      grandTotal += total;
+      totalItems += item.quantity;
+
+      table += `
+        <tr>
+          <td>${item.name}</td>
+          <td>₹${item.price}</td>
+          <td>
+            <button class="btn-sub" onclick="changeQty(${index}, -1)">-</button>
+            ${item.quantity}
+            <button class="btn-add" onclick="changeQty(${index}, 1)">+</button>
+          </td>
+          <td>₹${total}</td>
+          <td><button class="btn-remove" onclick="removeItem(${index})">Remove</button></td>
+        </tr>
+      `;
+    });
+
+    // Delivery Charge Calculation
+    let baskets = Math.ceil(totalItems / 7); 
+    let deliveryCharge = baskets * 30;
+
+    let discountText = "";
+    if (grandTotal > 2099) {
+      let discount = deliveryCharge * 0.25;
+      deliveryCharge = deliveryCharge - discount;
+      discountText = ` (25% off applied)`;
+    }
+
+    let finalPayable = grandTotal + deliveryCharge;
+
+    // Basket Row
+    table += `
+      <tr>
+        <td colspan="2"><b>Total Items:</b> ${totalItems}</td>
+        <td colspan="3"><b>Baskets:</b> ${baskets} × ₹30</td>
+      </tr>
+    `;
+
+    // Grand Total & Delivery Charge Row
+    table += `
+      <tr>
+        <td colspan="2"><b>Grand Total:</b> ₹${grandTotal}</td>
+        <td colspan="3"><b>Delivery Charge:</b> ₹${deliveryCharge.toFixed(2)} ${discountText}</td>
+      </tr>
+      <tr>
+        <td colspan="5" style="text-align:right; font-weight:bold;">Final Payable: ₹${finalPayable.toFixed(2)}</td>
+      </tr>
+    `;
+
+    table += `</table>
+      <button class="checkout-btn" onclick="goToCheckout()">Proceed to Checkout</button>
+      <p class="conditions"> * Delivery charges: ₹30 per 7 items (1 basket).<br>
+        * Orders above ₹2099 get <b>25% off</b> on delivery charge.
+      </div></p>
+    `;
+
+    container.innerHTML = table;
+  }
+
+  function changeQty(index, change) {
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    if (cart[index].quantity + change <= 0) {
+      cart.splice(index, 1); 
+    } else {
+      cart[index].quantity += change;
+    }
+    localStorage.setItem("cart", JSON.stringify(cart));
+    loadCart();
+  }
+
+  function removeItem(index) {
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    cart.splice(index, 1);
+    localStorage.setItem("cart", JSON.stringify(cart));
+    loadCart();
+  }
+
+  function goToCheckout() {
+    window.location.href = "checkout.html";
+  }
+
+  loadCart();
+</script>
+
+</body>
+</html>
